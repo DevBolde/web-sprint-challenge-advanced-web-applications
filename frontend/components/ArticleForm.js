@@ -6,30 +6,63 @@ const initialFormValues = { title: '', text: '', topic: '' }
 export default function ArticleForm(props) {
   const [values, setValues] = useState(initialFormValues)
   // ✨ where are my props? Destructure them here
+  const {postArticle, currentArticle, getArticles} = props
 
+  
   useEffect(() => {
-    // ✨ implement
+     // ✨ implement
     // Every time the `currentArticle` prop changes, we should check it for truthiness:
     // if it's truthy, we should set its title, text and topic into the corresponding
     // values of the form. If it's not, we should reset the form back to initial values.
-  })
 
+    if (values) {
+      // If currentArticle is truthy, set its title, text, and topic into the form values
+      setValues({
+        title: values.title,
+        text: values.text,
+        topic: values.topic
+      });
+    } else {
+      // If currentArticle is falsy, reset the form back to initial values
+      setValues(initialFormValues);
+    }
+
+  }, []);
+  
   const onChange = evt => {
     const { id, value } = evt.target
     setValues({ ...values, [id]: value })
   }
 
   const onSubmit = evt => {
-    evt.preventDefault()
-    // ✨ implement
-    // We must submit a new post or update an existing one,
-    // depending on the truthyness of the `currentArticle` prop.
-  }
+    evt.preventDefault();
+  
+    // Create a new article object from the form values
+    const newArticle = {
+      title: values.title,
+      text: values.text,
+      topic: values.topic,
+    };
+  
+    // Reset the form to initial values
+    setValues(initialFormValues);
+  
+    // Call the postArticle function to add the new article
+    postArticle(newArticle);
+  
+    // Display a success message
+    setMessage('Article created successfully!');
+  };
+  
 
   const isDisabled = () => {
     // ✨ implement
     // Make sure the inputs have some values
-  }
+    return !values.title || !values.text || !values.topic;
+  };
+  
+    
+  
 
   return (
     // ✨ fix the JSX: make the heading display either "Edit" or "Create"
