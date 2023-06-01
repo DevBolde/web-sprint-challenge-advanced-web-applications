@@ -6,33 +6,31 @@ const initialFormValues = { title: '', text: '', topic: '' }
 export default function ArticleForm(props) {
   const [values, setValues] = useState(initialFormValues)
   // ✨ where are my props? Destructure them here
-  const {postArticle, currentArticle, getArticles} = props
-
+  const {postArticle, currentArticle, updateArticle, setCurrentArticleId} = props
   
+  console.log(currentArticle)
   useEffect(() => {
      // ✨ implement
     // Every time the `currentArticle` prop changes, we should check it for truthiness:
     // if it's truthy, we should set its title, text and topic into the corresponding
     // values of the form. If it's not, we should reset the form back to initial values.
-
-    if (values) {
-      // If currentArticle is truthy, set its title, text, and topic into the form values
-      setValues({
-        title: values.title,
-        text: values.text,
-        topic: values.topic
-      });
-    } else {
-      // If currentArticle is falsy, reset the form back to initial values
-      setValues(initialFormValues);
+    if(currentArticle){
+      setValues(currentArticle)
+    }else{
+      setValues(initialFormValues)
     }
 
-  }, []);
+  }, [currentArticle]);
   
   const onChange = evt => {
     const { id, value } = evt.target
     setValues({ ...values, [id]: value })
   }
+
+  const handleCancelEdit = () => {
+    setValues(initialFormValues)
+  };
+  
 
   const onSubmit = evt => {
     evt.preventDefault();
@@ -46,12 +44,15 @@ export default function ArticleForm(props) {
   
     // Reset the form to initial values
     setValues(initialFormValues);
-  
+  console.log(currentArticle)
     // Call the postArticle function to add the new article
-    postArticle(newArticle);
+    if(!currentArticle.article_id){
+      postArticle(newArticle);
+    } else{
+      updateArticle({ article: newArticle, article_id: currentArticle.article_id })
+    }
+    
   
-    // Display a success message
-    setMessage('Article created successfully!');
   };
   
 
@@ -91,7 +92,7 @@ export default function ArticleForm(props) {
       </select>
       <div className="button-group">
         <button disabled={isDisabled()} id="submitArticle">Submit</button>
-        <button onClick={Function.prototype}>Cancel edit</button>
+        <button onClick={() => handleCancelEdit()}>Cancel edit</button>
       </div>
     </form>
   )

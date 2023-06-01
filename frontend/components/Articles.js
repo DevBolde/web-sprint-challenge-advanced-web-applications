@@ -5,7 +5,7 @@ import axiosWithAuth from '../axios'
 
 export default function Articles(props) {
   // ✨ where are my props? Destructure them here
-  const {  articles, getArticles, deleteArticle, updateArticle,  } = props;
+  const {  articles, getArticles, deleteArticle, updateArticle, setCurrentArticleId, currentArticleId } = props;
   const navigate = useNavigate();
   const token = localStorage.getItem('token')
    
@@ -16,14 +16,13 @@ export default function Articles(props) {
     // ✨ grab the articles here, on first render only
     if(!token){
       navigate("/")
-    }
-    axiosWithAuth().get("/articles")
-    .then(res => {
-      console.log(res)
+    }else {
+      console.log("Fetching articles...");
       getArticles();
-    })
-    .catch(err => console.error("Articles useEffect", err))
+    }
   }, [])
+
+ 
 
   return (
     // ✨ fix the JSX: replace `Function.prototype` with actual functions
@@ -42,7 +41,7 @@ export default function Articles(props) {
                   <p>Topic: {art.topic}</p>
                 </div>
                 <div>
-                  <button disabled={false} onClick={() => updateArticle()}>Edit</button>
+                  <button disabled={false} onClick={() => setCurrentArticleId(art)}>Edit</button>
                   <button disabled={false} onClick={() => deleteArticle(art.article_id)}>Delete</button>
                 </div>
               </div>

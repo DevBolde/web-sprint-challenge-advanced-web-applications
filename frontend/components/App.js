@@ -40,7 +40,11 @@ export default function App() {
     }
   };
   
-
+  // Flush the message state, turn on the spinner,
+    // and launch a request to the proper endpoint.
+    // On success, set the token to localStorage in a 'token' key,
+    // put the server success message in its proper state, and redirect
+    // to the Articles screen. Don't forget to turn off the spinner!
   const login = ({ username, password }) => {
     setMessage('')
     setSpinnerOn(true)
@@ -59,14 +63,9 @@ export default function App() {
         setMessage(res.data.message)
       });
   
-    // Flush the message state, turn on the spinner,
-    // and launch a request to the proper endpoint.
-    // On success, set the token to localStorage in a 'token' key,
-    // put the server success message in its proper state, and redirect
-    // to the Articles screen. Don't forget to turn off the spinner!
+    
   };
 
-  const getArticles = () => {
     // ✨ implement
     // We should flush the message state, turn on the spinner
     // and launch an authenticated request to the proper endpoint.
@@ -75,25 +74,32 @@ export default function App() {
     // If something goes wrong, check the status of the response:
     // if it's a 401 the token might have gone bad, and we should redirect to login.
     // Don't forget to turn off the spinner!
-    setMessage('');
-    setSpinnerOn(true);
-  
-    axiosWithAuth()
-      .get(articlesUrl)
-      .then(response => {
-        console.log("getArticles Success",response)
-        setArticles(response.data.articles);
-        setCurrentArticleId(response.data.article_id)
-        setMessage(response.data.message);
-        setSpinnerOn(false);
-      })
-      .catch(error => {
-        console.log("getArticles error",error)
-          setMessage(error.data.message);
+
+    const getArticles = () => {
+      setMessage("");
+      setSpinnerOn(true);
+    
+      axiosWithAuth()
+        .get(articlesUrl)
+        .then(response => {
+          console.log("getArticles Success", response);
+          setArticles(response.data.articles);
+          setMessage(response.data.message);
           setSpinnerOn(false);
-      });
-      
-  };
+        })
+        .catch(error => {
+          console.log("getArticles error", error);
+          if (error.response && error.response.status === 401) {
+            // Token expired, redirect to login
+            setMessage("Token expired. Redirecting to login...");
+            setSpinnerOn(false);
+          } else {
+            setMessage("An error occurred while fetching articles.");
+            setSpinnerOn(false);
+          }
+        });
+    };
+    
   
 
   const postArticle = article => {
@@ -101,50 +107,65 @@ export default function App() {
     // The flow is very similar to the `getArticles` function.
     // You'll know what to do! Use log statements or breakpoints
     // to inspect the response from the server.
-    setMessage('');
-    setSpinnerOn(true);
-  
+   
     axiosWithAuth()
     .post(articlesUrl, article)
     .then(response => {
-      if (response.status === 201) {
-        console.log('postArticles Success', response);
-        setSpinnerOn(false);
-      } else {
-        setMessage('An error occurred while posting the article.');
-        setSpinnerOn(false);
-      }
+      console.log("postArticle Sucess", response);
+      setMessage(response.data.message)
+      setArticles(articles => {
+        return articles.concat(response.data.article)})
     })
     .catch(error => {
       console.log('postArticles error', error);
       setMessage('An error occurred while posting the article.');
-      setSpinnerOn(false);
     });
   }
 
+
   const updateArticle = ({ article_id, article }) => {
-    // ✨ implement
-    // You got this!
-  }
+    setSpinnerOn(true);
+    console.log(article, article_id)
+    axiosWithAuth()
+      .put(`${articlesUrl}/${article_id}`, article) // Use PUT request to update the article
+      .then(response => {
+        console.log("updateArticle Success", response);
+        setMessage(response.data.message);
+        setArticles(articles => {
+          return articles.map(art => {
+            return art.article_id === article_id ? response.data.article : art
+          })
+        })
+        setSpinnerOn(false);
+      })
+      .catch(error => {
+        console.log("updateArticle error", error);
+        setMessage(error.message);
+        setSpinnerOn(false);
+      });
+  };
+  
 
   const deleteArticle = article_id => {
-    setMessage('');
     setSpinnerOn(true);
-  
+
     axiosWithAuth()
       .delete(`${articlesUrl}/${article_id}`)
       .then(res => {
         console.log(res)
         setMessage(res.data.message);
-        getArticles();
+        setArticles(articles => {
+          return articles.filter(art => {
+            return art.article_id != article_id
+          })
+        })
         setSpinnerOn(false);
       })
       .catch(error => {
         console.log("deleteArticle error", error);
-      })
-      .finally(() => {
+        setMessage(error.message)
         setSpinnerOn(false);
-      });
+      })
   };
   
   
@@ -165,12 +186,19 @@ export default function App() {
           <Route path="/" element={<LoginForm login={login}/>} />
           <Route path="articles" element={
             <>
-              <ArticleForm postArticle={postArticle} getArticles={getArticles}/>
+              <ArticleForm 
+              postArticle={postArticle} 
+              setCurrentArticleId={setCurrentArticleId}
+              currentArticle={currentArticleId}
+              updateArticle={updateArticle}
+              />
               <Articles 
                 getArticles={getArticles} 
                 articles={articles} 
                 deleteArticle={deleteArticle} 
                 updateArticle={updateArticle} 
+                setCurrentArticleId={setCurrentArticleId}
+                currentArticleId={currentArticleId}
               />
             </>
           } />
